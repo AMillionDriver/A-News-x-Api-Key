@@ -141,310 +141,256 @@
    </p>
   </footer>
   <script>
-   (() => {
-      const API_KEY = "eaad5bf90ce54e3db9a3c3c51ee78a94"; // Ganti dengan API Key NewsAPI Anda
-      const PAGE_SIZE = 9;
-      const country = "id";
+  (() => {
+    const API_KEY = "fef1a00e28d29b01d82108da77ac80b0"; // Ganti ini dengan API Key dari gnews.io
+    const PAGE_SIZE = 9;
 
-      const newsGrid = document.getElementById("newsGrid");
-      const loadingIndicator = document.getElementById("loadingIndicator");
-      const errorMessage = document.getElementById("errorMessage");
-      const noResultsMessage = document.getElementById("noResultsMessage");
-      const searchForm = document.getElementById("searchForm");
-      const searchInput = document.getElementById("searchInput");
-      const categorySelect = document.getElementById("categorySelect");
-      const prevPageBtn = document.getElementById("prevPage");
-      const nextPageBtn = document.getElementById("nextPage");
-      const pageInfo = document.getElementById("pageInfo");
-      const darkModeToggle = document.getElementById("darkModeToggle");
-      const mobileMenuButton = document.getElementById("mobileMenuButton");
-      const mobileMenu = document.getElementById("mobileMenu");
+    const newsGrid = document.getElementById("newsGrid");
+    const loadingIndicator = document.getElementById("loadingIndicator");
+    const errorMessage = document.getElementById("errorMessage");
+    const noResultsMessage = document.getElementById("noResultsMessage");
+    const searchForm = document.getElementById("searchForm");
+    const searchInput = document.getElementById("searchInput");
+    const categorySelect = document.getElementById("categorySelect");
+    const prevPageBtn = document.getElementById("prevPage");
+    const nextPageBtn = document.getElementById("nextPage");
+    const pageInfo = document.getElementById("pageInfo");
+    const darkModeToggle = document.getElementById("darkModeToggle");
+    const mobileMenuButton = document.getElementById("mobileMenuButton");
+    const mobileMenu = document.getElementById("mobileMenu");
 
-      let currentPage = 1;
-      let totalResults = 0;
-      let currentQuery = "";
-      let currentCategory = "";
+    let currentPage = 1;
+    let totalResults = 0;
+    let currentQuery = "";
+    let currentCategory = "";
 
-      // Format tanggal ke "21 Juni 2025"
-      function formatDate(dateString) {
-        if (!dateString) return "";
-        const months = [
-          "Januari",
-          "Februari",
-          "Maret",
-          "April",
-          "Mei",
-          "Juni",
-          "Juli",
-          "Agustus",
-          "September",
-          "Oktober",
-          "November",
-          "Desember",
-        ];
-        const date = new Date(dateString);
-        if (isNaN(date)) return "";
-        const day = date.getDate();
-        const month = months[date.getMonth()];
-        const year = date.getFullYear();
-        return `${day} ${month} ${year}`;
+    function formatDate(dateString) {
+      if (!dateString) return "";
+      const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      const date = new Date(dateString);
+      if (isNaN(date)) return "";
+      const day = date.getDate();
+      const month = months[date.getMonth()];
+      const year = date.getFullYear();
+      return `${day} ${month} ${year}`;
+    }
+
+    const defaultImage = "https://placehold.co/600x400/png?text=Gambar+Berita+Tidak+Tersedia";
+
+    function clearNews() {
+      newsGrid.innerHTML = "";
+      errorMessage.hidden = true;
+      noResultsMessage.hidden = true;
+    }
+
+    function showLoading() {
+      loadingIndicator.hidden = false;
+      errorMessage.hidden = true;
+      noResultsMessage.hidden = true;
+      newsGrid.innerHTML = "";
+    }
+
+    function hideLoading() {
+      loadingIndicator.hidden = true;
+    }
+
+    function showError(msg) {
+      errorMessage.textContent = msg;
+      errorMessage.hidden = false;
+      noResultsMessage.hidden = true;
+      newsGrid.innerHTML = "";
+    }
+
+    function showNoResults() {
+      noResultsMessage.hidden = false;
+      errorMessage.hidden = true;
+      newsGrid.innerHTML = "";
+    }
+
+    function renderNews(articles) {
+      clearNews();
+      if (!articles || articles.length === 0) {
+        showNoResults();
+        return;
       }
 
-      // Fallback gambar default
-      const defaultImage =
-        "https://placehold.co/600x400/png?text=Gambar+Berita+Tidak+Tersedia";
+      const fragment = document.createDocumentFragment();
 
-      // Bersihkan konten berita
-      function clearNews() {
-        newsGrid.innerHTML = "";
-        errorMessage.hidden = true;
-        noResultsMessage.hidden = true;
-      }
+      articles.forEach((article) => {
+        const { image, title, publishedAt, description, url, source } = article;
 
-      // Tampilkan loading
-      function showLoading() {
-        loadingIndicator.hidden = false;
-        errorMessage.hidden = true;
-        noResultsMessage.hidden = true;
-        newsGrid.innerHTML = "";
-      }
+        const card = document.createElement("article");
+        card.setAttribute("tabindex", "0");
+        card.className = "flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500";
 
-      // Sembunyikan loading
-      function hideLoading() {
-        loadingIndicator.hidden = true;
-      }
+        const imgWrapper = document.createElement("div");
+        imgWrapper.className = "w-full aspect-[3/2] overflow-hidden bg-gray-200 dark:bg-gray-700";
 
-      // Tampilkan error
-      function showError(msg) {
-        errorMessage.textContent = msg;
-        errorMessage.hidden = false;
-        noResultsMessage.hidden = true;
-        newsGrid.innerHTML = "";
-      }
+        const img = document.createElement("img");
+        img.src = image || defaultImage;
+        img.alt = title || "Gambar berita";
+        img.loading = "lazy";
+        img.className = "object-cover w-full h-full";
+        imgWrapper.appendChild(img);
 
-      // Tampilkan "Berita tidak ditemukan"
-      function showNoResults() {
-        noResultsMessage.hidden = false;
-        errorMessage.hidden = true;
-        newsGrid.innerHTML = "";
-      }
+        const content = document.createElement("div");
+        content.className = "flex flex-col flex-grow p-4";
 
-      // Render berita ke grid
-      function renderNews(articles) {
-        clearNews();
-        if (!articles || articles.length === 0) {
-          showNoResults();
-          return;
-        }
-        const fragment = document.createDocumentFragment();
+        const h2 = document.createElement("h2");
+        h2.className = "text-lg font-semibold mb-2 line-clamp-2 text-gray-900 dark:text-gray-100";
+        h2.textContent = title || "Judul berita tidak tersedia";
 
-        articles.forEach((article) => {
-          const {
-            urlToImage,
-            title,
-            publishedAt,
-            description,
-            url,
-            source,
-          } = article;
-
-          const card = document.createElement("article");
-          card.setAttribute("tabindex", "0");
-          card.className =
-            "flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500";
-
-          // Image container with fixed aspect ratio 3:2
-          const imgWrapper = document.createElement("div");
-          imgWrapper.className = "w-full aspect-[3/2] overflow-hidden bg-gray-200 dark:bg-gray-700";
-
-          const img = document.createElement("img");
-          img.src = urlToImage || defaultImage;
-          img.alt = title || "Gambar berita";
-          img.loading = "lazy";
-          img.className = "object-cover w-full h-full";
-          imgWrapper.appendChild(img);
-
-          // Content container
-          const content = document.createElement("div");
-          content.className = "flex flex-col flex-grow p-4";
-
-          // Title
-          const h2 = document.createElement("h2");
-          h2.className =
-            "text-lg font-semibold mb-2 line-clamp-2 text-gray-900 dark:text-gray-100";
-          h2.textContent = title || "Judul berita tidak tersedia";
-
-          // Date & source
-          const meta = document.createElement("p");
-          meta.className = "text-sm text-gray-500 dark:text-gray-400 mb-3 select-none";
-          meta.textContent = formatDate(publishedAt);
-          if (source && source.name) {
-            meta.textContent += ` • ${source.name}`;
-          }
-
-          // Description
-          const desc = document.createElement("p");
-          desc.className =
-            "text-gray-700 dark:text-gray-300 flex-grow line-clamp-3 mb-4";
-          desc.textContent = description || "Deskripsi berita tidak tersedia.";
-
-          // Button baca selengkapnya
-          const btn = document.createElement("a");
-          btn.href = url || "#";
-          btn.target = "_blank";
-          btn.rel = "noopener noreferrer";
-          btn.className =
-            "inline-block mt-auto self-start bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold rounded-md px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-blue-500";
-          btn.textContent = "Baca Selengkapnya";
-
-          content.appendChild(h2);
-          content.appendChild(meta);
-          content.appendChild(desc);
-          content.appendChild(btn);
-
-          card.appendChild(imgWrapper);
-          card.appendChild(content);
-
-          fragment.appendChild(card);
-        });
-
-        newsGrid.appendChild(fragment);
-      }
-
-      // Update pagination buttons and info
-      function updatePagination() {
-        const totalPages = Math.ceil(totalResults / PAGE_SIZE);
-        pageInfo.textContent = `Halaman ${currentPage} dari ${totalPages || 1}`;
-        prevPageBtn.disabled = currentPage <= 1;
-        nextPageBtn.disabled = currentPage >= totalPages;
-        prevPageBtn.setAttribute("aria-disabled", prevPageBtn.disabled);
-        nextPageBtn.setAttribute("aria-disabled", nextPageBtn.disabled);
-      }
-
-      // Fetch berita dari NewsAPI
-      async function fetchNews() {
-        showLoading();
-        clearNews();
-
-        const params = new URLSearchParams({
-          apiKey: API_KEY,
-          country,
-          page: currentPage,
-          pageSize: PAGE_SIZE,
-        });
-
-        if (currentCategory) {
-          params.append("category", currentCategory);
-        }
-        if (currentQuery) {
-          params.append("q", currentQuery);
+        const meta = document.createElement("p");
+        meta.className = "text-sm text-gray-500 dark:text-gray-400 mb-3 select-none";
+        meta.textContent = formatDate(publishedAt);
+        if (source && source.name) {
+          meta.textContent += ` • ${source.name}`;
         }
 
-        try {
-          const response = await fetch(
-            `https://newsapi.org/v2/top-headlines?${params.toString()}`
-          );
-          if (!response.ok) {
-            throw new Error(`Gagal mengambil data: ${response.status} ${response.statusText}`);
-          }
-          const data = await response.json();
-          if (data.status !== "ok") {
-            throw new Error(`API error: ${data.message || "Tidak diketahui"}`);
-          }
-          totalResults = data.totalResults || 0;
-          renderNews(data.articles);
-          updatePagination();
-        } catch (error) {
-          showError(error.message);
-          pageInfo.textContent = "";
-        } finally {
-          hideLoading();
-        }
-      }
+        const desc = document.createElement("p");
+        desc.className = "text-gray-700 dark:text-gray-300 flex-grow line-clamp-3 mb-4";
+        desc.textContent = description || "Deskripsi berita tidak tersedia.";
 
-      // Event: submit form cari berita
-      searchForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        currentQuery = searchInput.value.trim();
-        currentCategory = categorySelect.value;
-        currentPage = 1;
-        fetchNews();
+        const btn = document.createElement("a");
+        btn.href = url || "#";
+        btn.target = "_blank";
+        btn.rel = "noopener noreferrer";
+        btn.className = "inline-block mt-auto self-start bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold rounded-md px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-blue-500";
+        btn.textContent = "Baca Selengkapnya";
+
+        content.appendChild(h2);
+        content.appendChild(meta);
+        content.appendChild(desc);
+        content.appendChild(btn);
+
+        card.appendChild(imgWrapper);
+        card.appendChild(content);
+        fragment.appendChild(card);
       });
 
-      // Event: ganti kategori lewat dropdown
-      categorySelect.addEventListener("change", () => {
-        currentCategory = categorySelect.value;
-        currentPage = 1;
-        fetchNews();
+      newsGrid.appendChild(fragment);
+    }
+
+    function updatePagination() {
+      const totalPages = Math.ceil(totalResults / PAGE_SIZE);
+      pageInfo.textContent = `Halaman ${currentPage} dari ${totalPages || 1}`;
+      prevPageBtn.disabled = currentPage <= 1;
+      nextPageBtn.disabled = currentPage >= totalPages;
+      prevPageBtn.setAttribute("aria-disabled", prevPageBtn.disabled);
+      nextPageBtn.setAttribute("aria-disabled", nextPageBtn.disabled);
+    }
+
+    // --- BAGIAN INTI: FETCH DARI GNEWS ---
+    async function fetchNews() {
+      showLoading();
+      clearNews();
+
+      const keyword = [currentQuery, currentCategory].filter(Boolean).join(" ") || "berita";
+      const params = new URLSearchParams({
+        q: keyword,
+        lang: "id",
+        max: PAGE_SIZE,
+        token: API_KEY,
       });
 
-      // Pagination buttons
-      prevPageBtn.addEventListener("click", () => {
-        if (currentPage > 1) {
-          currentPage--;
-          fetchNews();
-          window.scrollTo({ top: 0, behavior: "smooth" });
+      try {
+        const response = await fetch(`https://gnews.io/api/v4/search?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error(`Gagal mengambil data: ${response.status} ${response.statusText}`);
         }
-      });
-      nextPageBtn.addEventListener("click", () => {
-        const totalPages = Math.ceil(totalResults / PAGE_SIZE);
-        if (currentPage < totalPages) {
-          currentPage++;
-          fetchNews();
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-      });
 
-      // Dark mode toggle
-      function setDarkMode(enabled) {
-        if (enabled) {
-          document.documentElement.classList.add("dark");
-          localStorage.setItem("darkMode", "true");
-          darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-          darkModeToggle.setAttribute("aria-label", "Matikan mode gelap");
-          darkModeToggle.title = "Matikan mode gelap";
-        } else {
-          document.documentElement.classList.remove("dark");
-          localStorage.setItem("darkMode", "false");
-          darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-          darkModeToggle.setAttribute("aria-label", "Nyalakan mode gelap");
-          darkModeToggle.title = "Nyalakan mode gelap";
+        const data = await response.json();
+        if (!data.articles) {
+          throw new Error(`API error: ${data.message || "Tidak diketahui"}`);
         }
+
+        totalResults = data.totalArticles || data.articles.length;
+        renderNews(data.articles);
+        updatePagination();
+      } catch (error) {
+        showError(error.message);
+        pageInfo.textContent = "";
+      } finally {
+        hideLoading();
       }
+    }
 
-      darkModeToggle.addEventListener("click", () => {
-        const isDark = document.documentElement.classList.contains("dark");
-        setDarkMode(!isDark);
-      });
-
-      // Load dark mode preference
-      (function initDarkMode() {
-        const saved = localStorage.getItem("darkMode");
-        if (saved === "true") {
-          setDarkMode(true);
-        } else if (saved === "false") {
-          setDarkMode(false);
-        } else {
-          // Default: match system preference
-          const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          setDarkMode(prefersDark);
-        }
-      })();
-
-      // Mobile menu toggle
-      mobileMenuButton.addEventListener("click", () => {
-        if (mobileMenu.classList.contains("hidden")) {
-          mobileMenu.classList.remove("hidden");
-          mobileMenuButton.setAttribute("aria-expanded", "true");
-        } else {
-          mobileMenu.classList.add("hidden");
-          mobileMenuButton.setAttribute("aria-expanded", "false");
-        }
-      });
-
-      // Inisialisasi: fetch berita top headlines
+    searchForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      currentQuery = searchInput.value.trim();
+      currentCategory = categorySelect.value;
+      currentPage = 1;
       fetchNews();
+    });
+
+    categorySelect.addEventListener("change", () => {
+      currentCategory = categorySelect.value;
+      currentPage = 1;
+      fetchNews();
+    });
+
+    prevPageBtn.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        fetchNews();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+
+    nextPageBtn.addEventListener("click", () => {
+      const totalPages = Math.ceil(totalResults / PAGE_SIZE);
+      if (currentPage < totalPages) {
+        currentPage++;
+        fetchNews();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+
+    function setDarkMode(enabled) {
+      if (enabled) {
+        document.documentElement.classList.add("dark");
+        localStorage.setItem("darkMode", "true");
+        darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        darkModeToggle.setAttribute("aria-label", "Matikan mode gelap");
+        darkModeToggle.title = "Matikan mode gelap";
+      } else {
+        document.documentElement.classList.remove("dark");
+        localStorage.setItem("darkMode", "false");
+        darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+        darkModeToggle.setAttribute("aria-label", "Nyalakan mode gelap");
+        darkModeToggle.title = "Nyalakan mode gelap";
+      }
+    }
+
+    darkModeToggle.addEventListener("click", () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      setDarkMode(!isDark);
+    });
+
+    (function initDarkMode() {
+      const saved = localStorage.getItem("darkMode");
+      if (saved === "true") {
+        setDarkMode(true);
+      } else if (saved === "false") {
+        setDarkMode(false);
+      } else {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        setDarkMode(prefersDark);
+      }
     })();
-  </script>
+
+    mobileMenuButton.addEventListener("click", () => {
+      if (mobileMenu.classList.contains("hidden")) {
+        mobileMenu.classList.remove("hidden");
+        mobileMenuButton.setAttribute("aria-expanded", "true");
+      } else {
+        mobileMenu.classList.add("hidden");
+        mobileMenuButton.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    fetchNews();
+  })();
+</script>
  </body>
 </html>
