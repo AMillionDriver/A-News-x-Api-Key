@@ -10,12 +10,15 @@ const sanitizeFilter = (filter) => ({
   pageSize: Number(filter.pageSize) || 9,
 });
 
-export const createSavedFiltersStore = () => {
-  let filters = (readFromStorage(STORAGE_KEYS.savedFilters, []) || []).map(sanitizeFilter).filter((filter) => filter.name);
+export const createSavedFiltersStore = async () => {
+  const storedFilters = (await readFromStorage(STORAGE_KEYS.savedFilters, [])) || [];
+  let filters = storedFilters.map(sanitizeFilter).filter((filter) => filter.name);
   const subscribers = new Set();
 
   const commit = () => {
-    writeToStorage(STORAGE_KEYS.savedFilters, filters);
+    writeToStorage(STORAGE_KEYS.savedFilters, filters).catch((error) =>
+      console.warn('Gagal menyimpan filter tersimpan', error),
+    );
     subscribers.forEach((callback) => callback(filters));
   };
 

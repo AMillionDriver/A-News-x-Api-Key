@@ -14,6 +14,7 @@ import {
   renderNicheFocus,
   renderSavedFilters,
   renderSkeletons,
+  renderSecurityHighlights,
   renderStats,
   renderTrendingTopics,
   updateStatusBanner,
@@ -21,10 +22,11 @@ import {
   updateDensityToggle,
 } from './ui.renderers.js';
 import { preferReducedMotion, qsa, qs, setHidden, toggleClass } from './utils.dom.js';
+import { generateIntegrityHash, isSecureStorageSupported, maskFingerprint } from './utils.security.js';
 
 const newsClient = createNewsClient();
-const preferencesStore = createPreferencesStore();
-const savedFiltersStore = createSavedFiltersStore();
+let preferencesStore;
+let savedFiltersStore;
 
 const elements = {
   newsGrid: qs('#newsGrid'),
@@ -70,6 +72,14 @@ const elements = {
   commandPaletteList: qs('#commandPaletteList'),
   backToTop: qs('#backToTop'),
   scrollProgress: qs('#scrollProgress'),
+  securityHighlights: qs('#securityHighlights'),
+  securityStatusBadge: qs('#securityStatusBadge'),
+  securityFingerprint: qs('#securityFingerprint'),
+  securityUpdatedAt: qs('#securityUpdatedAt'),
+  securitySupportMessage: qs('#securitySupportMessage'),
+  integrityStatus: qs('#integrityStatus'),
+  integrityCheckButton: qs('#integrityCheckButton'),
+  copyFingerprintButton: qs('#copyFingerprintButton'),
 };
 
 const uiState = {
@@ -106,9 +116,23 @@ const applyTheme = (theme = 'system') => {
   }
 };
 
+const securityState = {
+  supported: isSecureStorageSupported(),
+  fingerprint: '',
+  lastIntegrityHash: '',
+  lastIntegrityCheck: null,
+  lastPreferencesUpdate: null,
+};
+
+const formatTimestamp = (date) => {
+  if (!date) return '-';
+  return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'medium' }).format(date);
+};
+
 const computeCommandItems = () => {
   const resolvedTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-  const { density, viewMode } = preferencesStore.getState();
+  const preferences = preferencesStore?.getState?.() || { density: 'comfortable', viewMode: 'grid' };
+  const { density, viewMode } = preferences;
   return COMMAND_ACTIONS.map((action) => {
     const item = { ...action };
     switch (action.id) {
@@ -138,10 +162,158 @@ const computeCommandItems = () => {
           item.description = 'Saat ini Anda sudah menggunakan tampilan daftar.';
         }
         break;
+      case 'run-integrity-check':
+        if (securityState.lastIntegrityCheck) {
+          item.description = `Fingerprint terakhir diperbarui ${formatTimestamp(securityState.lastIntegrityCheck)}.`;
+        }
+        break;
       default:
         break;
     }
     return item;
+  });
+};
+
+const updateSecuritySupport = () => {
+  if (elements.securityStatusBadge) {
+    const badge = elements.securityStatusBadge;
+    badge.classList.remove(
+      'bg-emerald-100',
+      'text-emerald-700',
+      'dark:bg-emerald-500/20',
+      'dark:text-emerald-200',
+      'bg-amber-100',
+      'text-amber-700',
+      'dark:bg-amber-500/20',
+      'dark:text-amber-200',
+    );
+    if (securityState.supported) {
+      badge.classList.add('bg-emerald-100', 'text-emerald-700', 'dark:bg-emerald-500/20', 'dark:text-emerald-200');
+      badge.textContent = 'Aktif';
+    } else {
+      badge.classList.add('bg-amber-100', 'text-amber-700', 'dark:bg-amber-500/20', 'dark:text-amber-200');
+      badge.textContent = 'Mode kompatibilitas';
+    }
+  }
+  if (elements.securitySupportMessage) {
+    elements.securitySupportMessage.textContent = securityState.supported
+      ? 'Penyimpanan terenkripsi aktif dengan AES-256 dan fingerprint SHA-256.'
+      : 'Web Crypto penuh tidak tersedia, sistem menggunakan sandi kompatibel untuk menjaga data.';
+  }
+};
+
+const toneClassMap = {
+  success: ['text-emerald-600', 'dark:text-emerald-300'],
+  error: ['text-red-600', 'dark:text-red-400'],
+  info: ['text-blue-600', 'dark:text-blue-300'],
+};
+
+const updateIntegrityStatus = (message, tone = 'info') => {
+  if (!elements.integrityStatus) return;
+  const element = elements.integrityStatus;
+  element.textContent = message;
+  Object.values(toneClassMap).forEach((classes) => element.classList.remove(...classes));
+  const classes = toneClassMap[tone] || toneClassMap.info;
+  element.classList.add(...classes);
+};
+
+const updateSecuritySummary = async () => {
+  if (!preferencesStore) return;
+  try {
+    const fingerprint = await generateIntegrityHash(preferencesStore.getState());
+    securityState.fingerprint = fingerprint;
+    securityState.lastPreferencesUpdate = new Date();
+    if (elements.securityFingerprint) {
+      elements.securityFingerprint.textContent = maskFingerprint(fingerprint);
+    }
+    if (elements.securityUpdatedAt) {
+      elements.securityUpdatedAt.textContent = formatTimestamp(securityState.lastPreferencesUpdate);
+    }
+  } catch (error) {
+    console.warn('Gagal memperbarui fingerprint preferensi', error);
+    if (elements.securityFingerprint) {
+      elements.securityFingerprint.textContent = 'Fingerprint tidak tersedia';
+    }
+  }
+  updateSecuritySupport();
+};
+
+const updateContentIntegrity = async (articles = uiState.articles) => {
+  if (!elements.integrityStatus) return;
+  if (!articles?.length) {
+    securityState.lastIntegrityHash = '';
+    securityState.lastIntegrityCheck = new Date();
+    updateIntegrityStatus('Menunggu data berita untuk dianalisis.', 'info');
+    return;
+  }
+  try {
+    const digest = await generateIntegrityHash(
+      articles
+        .map((article) => `${article.title || ''}|${article.publishedAt || ''}|${article.url || ''}`)
+        .join('||'),
+    );
+    securityState.lastIntegrityHash = digest;
+    securityState.lastIntegrityCheck = new Date();
+    updateIntegrityStatus(
+      `Fingerprint konten ${maskFingerprint(digest)} diperbarui ${formatTimestamp(securityState.lastIntegrityCheck)}.`,
+      'success',
+    );
+  } catch (error) {
+    console.warn('Gagal menghitung fingerprint konten', error);
+    updateIntegrityStatus('Fingerprint konten tidak dapat dihitung.', 'error');
+  }
+};
+
+const initSecurityPanel = () => {
+  renderSecurityHighlights(elements.securityHighlights);
+  updateSecuritySupport();
+  updateIntegrityStatus('Menunggu data berita untuk dianalisis.', 'info');
+  elements.integrityCheckButton?.addEventListener('click', async () => {
+    await updateContentIntegrity();
+    updateStatusBanner(elements.statusBanner, {
+      online: true,
+      tone: 'success',
+      message: 'Fingerprint konten diperbarui.',
+    });
+    setTimeout(() => updateStatusBanner(elements.statusBanner, { online: null, message: '', tone: 'info' }), 1600);
+  });
+  elements.copyFingerprintButton?.addEventListener('click', async () => {
+    if (!securityState.fingerprint) {
+      updateStatusBanner(elements.statusBanner, {
+        online: true,
+        tone: 'error',
+        message: 'Fingerprint preferensi belum tersedia.',
+      });
+      return;
+    }
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(securityState.fingerprint);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = securityState.fingerprint;
+        textarea.setAttribute('readonly', 'true');
+        textarea.style.position = 'absolute';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      updateStatusBanner(elements.statusBanner, {
+        online: true,
+        tone: 'success',
+        message: 'Fingerprint preferensi disalin ke clipboard.',
+      });
+      setTimeout(() => updateStatusBanner(elements.statusBanner, { online: null, message: '', tone: 'info' }), 1400);
+    } catch (error) {
+      console.warn('Gagal menyalin fingerprint', error);
+      updateStatusBanner(elements.statusBanner, {
+        online: true,
+        tone: 'error',
+        message: 'Tidak dapat menyalin fingerprint. Coba secara manual.',
+      });
+    }
   });
 };
 
@@ -323,6 +495,17 @@ const executeCommand = async (commandId) => {
         tone: 'success',
         message: nextDensity === 'compact' ? 'Mode padat aktif.' : 'Mode ruang lega aktif.',
       });
+      setTimeout(() => updateStatusBanner(elements.statusBanner, { online: null, message: '', tone: 'info' }), 1500);
+      break;
+    }
+    case 'run-integrity-check': {
+      await updateContentIntegrity();
+      updateStatusBanner(elements.statusBanner, {
+        online: true,
+        tone: 'success',
+        message: 'Fingerprint konten diperbarui.',
+      });
+      setTimeout(() => updateStatusBanner(elements.statusBanner, { online: null, message: '', tone: 'info' }), 1800);
       break;
     }
     case 'view-grid':
@@ -511,6 +694,7 @@ const initPreferenceSync = () => {
   preferencesStore.subscribe((state) => {
     updateViewToggle(elements.viewToggle, state.viewMode);
     updateDensityToggle(elements.densityToggle, state.density);
+    updateSecuritySummary();
   });
 };
 
@@ -559,6 +743,7 @@ const showNoResults = () => {
   renderFeaturedArticle(elements.featuredArticle, null);
   const { viewMode, density } = preferencesStore.getState();
   renderArticles({ container: elements.newsGrid, articles: [], viewMode, density });
+  updateContentIntegrity([]);
 };
 
 const updatePagination = () => {
@@ -736,18 +921,20 @@ const fetchAndRender = async ({ page = uiState.page, query } = {}) => {
     resetFeedback();
     renderFeaturedArticle(elements.featuredArticle, articles[0]);
     applyArticles(articles);
+    await updateContentIntegrity(articles);
     updatePagination();
   } catch (error) {
     console.error('Gagal memuat berita', error);
     hideLoading();
     if (!navigator.onLine) {
-      const fallback = newsClient.getOfflineFallback();
+      const fallback = await newsClient.getOfflineFallback();
       if (fallback?.payload?.articles?.length) {
         uiState.totalResults = fallback.payload.totalArticles ?? fallback.payload.articles.length;
         uiState.articles = fallback.payload.articles;
         uiState.lastUpdated = fallback.persistedAt ? new Date(fallback.persistedAt) : null;
         renderFeaturedArticle(elements.featuredArticle, uiState.articles[0]);
         applyArticles(uiState.articles);
+        await updateContentIntegrity(uiState.articles);
         updatePagination();
         updateStatusBanner(elements.statusBanner, {
           online: false,
@@ -988,7 +1175,11 @@ const initAccessibility = () => {
   });
 };
 
-const initApp = () => {
+const initApp = async () => {
+  preferencesStore = await createPreferencesStore();
+  savedFiltersStore = await createSavedFiltersStore();
+  initSecurityPanel();
+  await updateSecuritySummary();
   fillSelectOptions();
   hydrateFormFromPreferences();
   initFormHandlers();
@@ -1009,7 +1200,17 @@ const initApp = () => {
   initAccessibility();
   initPreferenceSync();
   syncOfflineBadge();
-  fetchAndRender({ page: 1 });
+  await updateContentIntegrity([]);
+  await fetchAndRender({ page: 1 });
 };
 
-window.addEventListener('DOMContentLoaded', initApp);
+window.addEventListener('DOMContentLoaded', () => {
+  initApp().catch((error) => {
+    console.error('Gagal menginisialisasi aplikasi', error);
+    updateStatusBanner(elements.statusBanner, {
+      online: true,
+      tone: 'error',
+      message: 'Gagal memulai aplikasi. Muat ulang untuk mencoba lagi.',
+    });
+  });
+});

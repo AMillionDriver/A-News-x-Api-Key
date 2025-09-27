@@ -19,7 +19,13 @@ const cacheKey = (options) => `${options.query || 'default'}::${options.category
 export const createNewsClient = () => {
   const getOfflineFallback = () => readFromStorage(STORAGE_KEYS.cachedArticles, null);
 
-  const persist = (payload) => writeToStorage(STORAGE_KEYS.cachedArticles, { ...payload, persistedAt: new Date().toISOString() });
+  const persist = async (payload) => {
+    try {
+      await writeToStorage(STORAGE_KEYS.cachedArticles, { ...payload, persistedAt: new Date().toISOString() });
+    } catch (error) {
+      console.warn('Gagal menyimpan cache berita terenkripsi', error);
+    }
+  };
 
   const fetchNews = async (options) => {
     const key = cacheKey(options);
@@ -43,7 +49,7 @@ export const createNewsClient = () => {
 
       const payload = await response.json();
       inMemoryCache.set(key, payload);
-      persist({ options, payload });
+      await persist({ options, payload });
       return payload;
     } finally {
       clearTimeout(timeout);

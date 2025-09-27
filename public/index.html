@@ -50,6 +50,12 @@
     <script type="module" src="/js/main.js"></script>
   </head>
   <body class="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <a
+      href="#beranda"
+      class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-4 focus:left-4 focus:rounded-lg focus:bg-blue-600 focus:px-4 focus:py-2 focus:text-white"
+    >
+      Langsung ke konten utama
+    </a>
     <div
       id="statusBanner"
       class="hidden"
@@ -76,6 +82,7 @@
           <a class="hover:text-blue-600 dark:hover:text-blue-400 transition" href="#beranda">Beranda</a>
           <a class="hover:text-blue-600 dark:hover:text-blue-400 transition" href="#kategori">Kategori</a>
           <a class="hover:text-blue-600 dark:hover:text-blue-400 transition" href="#trending">Trending</a>
+          <a class="hover:text-blue-600 dark:hover:text-blue-400 transition" href="#keamanan">Keamanan</a>
           <a class="hover:text-blue-600 dark:hover:text-blue-400 transition" href="#tentang">Tentang</a>
         </div>
         <div class="flex items-center space-x-4">
@@ -127,6 +134,9 @@
         </a>
         <a class="block px-4 py-3 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition" href="#trending">
           Trending
+        </a>
+        <a class="block px-4 py-3 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition" href="#keamanan">
+          Keamanan
         </a>
         <a class="block px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition" href="#tentang">
           Tentang
@@ -300,6 +310,26 @@
                   Temukan berita
                 </button>
               </form>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-white/90">
+                <div class="flex items-start gap-3 rounded-xl border border-white/20 bg-white/10 px-4 py-3">
+                  <span class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/30 text-white">
+                    <i class="fas fa-lock"></i>
+                  </span>
+                  <div class="space-y-1">
+                    <p class="font-semibold">Preferensi terenkripsi</p>
+                    <p class="text-xs text-blue-100">Fingerprint SHA-256 diperbarui otomatis setiap kali Anda menyesuaikan tampilan.</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3 rounded-xl border border-white/20 bg-white/10 px-4 py-3">
+                  <span class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/30 text-white">
+                    <i class="fas fa-user-shield"></i>
+                  </span>
+                  <div class="space-y-1">
+                    <p class="font-semibold">Audit satu klik</p>
+                    <p class="text-xs text-blue-100">Panel keamanan mempermudah pengecekan integritas cache offline.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -349,6 +379,79 @@
             <li class="flex gap-2"><i class="fas fa-sync-alt mt-1"></i> Perbarui filter dengan nama yang sama untuk menyimpan ulang preferensi Anda.</li>
             <li class="flex gap-2"><i class="fas fa-keyboard mt-1"></i> Tekan <span class="font-semibold">Ctrl/⌘ + K</span> untuk membuka pusat kendali.</li>
           </ul>
+        </aside>
+      </section>
+
+      <section
+        id="keamanan"
+        aria-labelledby="securityHeading"
+        class="grid grid-cols-1 lg:grid-cols-3 gap-6"
+      >
+        <div class="lg:col-span-2 rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/70 p-6 space-y-6 shadow-sm">
+          <div class="space-y-2">
+            <span class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+              <i class="fas fa-shield-alt"></i>
+              Perlindungan data
+            </span>
+            <h2 id="securityHeading" class="text-2xl font-semibold">Keamanan &amp; privasi NewsApp</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-300">
+              Preferensi tampilan, filter tersimpan, serta cache berita kini disandikan dengan enkripsi modern dan fingerprint hash sehingga hanya tersimpan di perangkat Anda.
+            </p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Status enkripsi</p>
+              <span
+                id="securityStatusBadge"
+                class="inline-flex items-center gap-2 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200 px-3 py-1 text-xs font-semibold"
+              >
+                Aktif
+              </span>
+              <p id="securitySupportMessage" class="text-sm text-gray-600 dark:text-gray-300">
+                Penyimpanan terenkripsi aktif dengan AES-256 dan fingerprint SHA-256.
+              </p>
+            </div>
+            <div class="space-y-3">
+              <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Fingerprint preferensi</p>
+              <p
+                id="securityFingerprint"
+                class="rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-3 py-2 font-mono text-sm text-gray-800 dark:text-gray-100"
+              >
+                Belum tersedia
+              </p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Diperbarui <span id="securityUpdatedAt">-</span></p>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  id="copyFingerprintButton"
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                >
+                  <i class="fas fa-copy"></i>
+                  Salin fingerprint
+                </button>
+                <button
+                  id="integrityCheckButton"
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 transition"
+                >
+                  <i class="fas fa-user-shield"></i>
+                  Audit integritas
+                </button>
+              </div>
+            </div>
+          </div>
+          <p id="integrityStatus" class="text-sm text-blue-600 dark:text-blue-300" aria-live="polite">
+            Menunggu data berita untuk dianalisis.
+          </p>
+        </div>
+        <aside class="rounded-3xl border border-gray-200 dark:border-gray-800 bg-gradient-to-br from-white via-blue-50 to-blue-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 p-6 space-y-4 shadow-sm">
+          <div class="space-y-1">
+            <h3 class="text-lg font-semibold text-blue-700 dark:text-blue-300">Lapisan perlindungan</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300">
+              Fitur keamanan yang aktif bekerja di latar memastikan data Anda tetap rahasia.
+            </p>
+          </div>
+          <div id="securityHighlights" class="grid grid-cols-1 gap-3"></div>
         </aside>
       </section>
 

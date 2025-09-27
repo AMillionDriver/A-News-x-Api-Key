@@ -20,11 +20,15 @@ const defaultPreferences = {
   lastQuery: '',
 };
 
-export const createPreferencesStore = () => {
-  let state = { ...defaultPreferences, ...readFromStorage(STORAGE_KEYS.preferences, {}) };
+export const createPreferencesStore = async () => {
+  const persistedPreferences = (await readFromStorage(STORAGE_KEYS.preferences, {})) || {};
+  let state = { ...defaultPreferences, ...persistedPreferences };
   const subscribers = new Set();
 
-  const save = () => writeToStorage(STORAGE_KEYS.preferences, state);
+  const save = () =>
+    writeToStorage(STORAGE_KEYS.preferences, state).catch((error) =>
+      console.warn('Gagal menyimpan preferensi', error),
+    );
 
   const setState = (partial) => {
     state = { ...state, ...partial };

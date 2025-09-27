@@ -107,6 +107,13 @@ export const COMMAND_ACTIONS = [
     keywords: 'refresh segarkan update',
     shortcut: 'R',
   },
+  {
+    id: 'run-integrity-check',
+    title: 'Audit keamanan data',
+    description: 'Hitung ulang fingerprint konten dan preferensi.',
+    icon: 'fas fa-shield-alt',
+    keywords: 'keamanan integritas hash fingerprint',
+  },
 ];
 
 export const TRENDING_IDEAS = [
@@ -202,5 +209,28 @@ export const NICHE_FOCUS_AREAS = [
     icon: 'fas fa-chalkboard-teacher',
     description: 'Solusi edtech, platform belajar mandiri, dan kebijakan pendidikan.',
     query: 'teknologi pendidikan indonesia',
+  },
+];
+
+export const SECURITY_MEASURES = [
+  {
+    title: 'Enkripsi AES-256',
+    description: 'Preferensi dan cache berita tersimpan dengan AES-GCM berbasis Web Crypto.',
+    icon: 'fas fa-lock',
+  },
+  {
+    title: 'Fingerprint SHA-256',
+    description: 'Setiap perubahan preferensi menghasilkan hash baru untuk verifikasi integritas.',
+    icon: 'fas fa-fingerprint',
+  },
+  {
+    title: 'Deteksi Mode Offline',
+    description: 'Cache terenkripsi digunakan otomatis saat koneksi terputus.',
+    icon: 'fas fa-wifi-slash',
+  },
+  {
+    title: 'Audit sekali sentuh',
+    description: 'Jalankan pemeriksaan integritas langsung dari panel keamanan.',
+    icon: 'fas fa-user-shield',
   },
 ];

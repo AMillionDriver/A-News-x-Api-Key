@@ -1,4 +1,4 @@
-import { NICHE_FOCUS_AREAS, TRENDING_IDEAS } from '../constants.js';
+import { NICHE_FOCUS_AREAS, SECURITY_MEASURES, TRENDING_IDEAS } from '../constants.js';
 import { animateSwap, createFragmentFromHTML, qsa, sanitizeUrl, setHidden, toggleClass, truncateText } from '../utils.dom.js';
 import { buildMetaText, formatDateTime, pluralize } from '../utils.formatters.js';
 
@@ -196,6 +196,27 @@ export const renderNicheFocus = (container, onSelect) => {
     `);
     const button = element.querySelector('button');
     button?.addEventListener('click', () => onSelect?.(area));
+    fragment.appendChild(element);
+  });
+  container.innerHTML = '';
+  container.appendChild(fragment);
+};
+
+export const renderSecurityHighlights = (container) => {
+  if (!container) return;
+  const fragment = document.createDocumentFragment();
+  SECURITY_MEASURES.forEach((item) => {
+    const element = createFragmentFromHTML(`
+      <article class="flex items-start gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 p-4 shadow-sm">
+        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300">
+          <i class="${item.icon}"></i>
+        </span>
+        <div class="space-y-1">
+          <h4 class="text-sm font-semibold">${item.title}</h4>
+          <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">${item.description}</p>
+        </div>
+      </article>
+    `);
     fragment.appendChild(element);
   });
   container.innerHTML = '';
