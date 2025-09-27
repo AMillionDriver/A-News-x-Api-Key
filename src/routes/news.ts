@@ -11,6 +11,8 @@ router.get(
   asyncHandler(async (req, res) => {
     const queryParam = typeof req.query.query === 'string' ? req.query.query : '';
     const categoryParam = typeof req.query.category === 'string' ? req.query.category : '';
+    const sortByParam = typeof req.query.sortBy === 'string' ? req.query.sortBy : '';
+    const timeRangeParam = typeof req.query.timeRange === 'string' ? req.query.timeRange : '';
 
     const pageParam = Array.isArray(req.query.page) ? req.query.page[0] : req.query.page;
     const pageSizeParam = Array.isArray(req.query.pageSize) ? req.query.pageSize[0] : req.query.pageSize;
@@ -31,12 +33,16 @@ router.get(
       category: categoryParam,
       page,
       pageSize,
+      sortBy: sortByParam,
+      timeRange: timeRangeParam,
     });
 
     res.json({
       totalArticles: result.totalArticles,
       articles: result.articles,
       cached: result.cached,
+      sortBy: result.sortBy,
+      timeRange: result.timeRange,
       page,
       pageSize,
     });

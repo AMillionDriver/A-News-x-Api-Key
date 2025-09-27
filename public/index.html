@@ -6,7 +6,7 @@
     <title>Berita Terkini - NewsApp</title>
     <meta
       name="description"
-      content="NewsApp menyajikan berita terbaru dari berbagai kategori menggunakan API GNews."
+      content="NewsApp menyajikan berita terbaru, sorotan harian, dan topik populer dari berbagai kategori menggunakan API GNews."
     />
     <link rel="icon" href="https://storage.googleapis.com/a1aa/image/fce953d0-ad31-4a47-7bcd-7590407c1d24.jpg" />
     <script src="https://cdn.tailwindcss.com" defer></script>
@@ -17,19 +17,9 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
-    <link
-      rel="preconnect"
-      href="https://fonts.googleapis.com"
-    />
-    <link
-      rel="preconnect"
-      href="https://fonts.gstatic.com"
-      crossorigin
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
     <style>
       html {
         scroll-behavior: smooth;
@@ -49,11 +39,24 @@
         border-radius: 10px;
         border: 2px solid #1f2937;
       }
+      .glass {
+        background: rgba(255, 255, 255, 0.55);
+        backdrop-filter: blur(16px);
+      }
+      .dark .glass {
+        background: rgba(17, 24, 39, 0.65);
+      }
     </style>
-    <script src="/js/main.js" defer></script>
+    <script type="module" src="/js/main.js"></script>
   </head>
   <body class="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
-    <header class="sticky top-0 z-50 bg-white dark:bg-gray-800 shadow-md">
+    <div
+      id="statusBanner"
+      class="hidden"
+      role="status"
+      aria-live="polite"
+    ></div>
+    <header class="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-b border-gray-200 dark:border-gray-800">
       <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
         <div class="flex items-center space-x-3">
           <img
@@ -64,14 +67,33 @@
             width="40"
             height="40"
           />
-          <a class="text-xl font-semibold tracking-wide select-none" href="#">NewsApp</a>
+          <div>
+            <a class="text-xl font-semibold tracking-wide select-none" href="#">NewsApp</a>
+            <p class="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">Sorotan berita aktual sepanjang hari</p>
+          </div>
         </div>
-        <div class="hidden md:flex space-x-8 font-medium">
-          <a class="hover:text-blue-600 dark:hover:text-blue-400 transition" href="#">Home</a>
+        <div class="hidden md:flex items-center space-x-8 font-medium">
+          <a class="hover:text-blue-600 dark:hover:text-blue-400 transition" href="#beranda">Beranda</a>
           <a class="hover:text-blue-600 dark:hover:text-blue-400 transition" href="#kategori">Kategori</a>
+          <a class="hover:text-blue-600 dark:hover:text-blue-400 transition" href="#trending">Trending</a>
           <a class="hover:text-blue-600 dark:hover:text-blue-400 transition" href="#tentang">Tentang</a>
         </div>
         <div class="flex items-center space-x-4">
+          <button
+            id="commandPaletteButton"
+            type="button"
+            class="hidden md:inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-800/70 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-sm hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+            aria-haspopup="dialog"
+            aria-expanded="false"
+            title="Pusat kendali (⌘/Ctrl + K)"
+          >
+            <i class="fas fa-magic"></i>
+            <span>Pusat kendali</span>
+            <span class="hidden xl:inline-flex items-center gap-1 text-[11px] font-semibold text-gray-400 dark:text-gray-500">
+              <span class="rounded border border-gray-300 px-1.5 py-0.5">⌘</span>
+              <span class="rounded border border-gray-300 px-1.5 py-0.5">K</span>
+            </span>
+          </button>
           <button
             id="darkModeToggle"
             class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition text-lg focus:outline-none"
@@ -80,6 +102,13 @@
           >
             <i class="fas fa-moon"></i>
           </button>
+          <a
+            href="#newsletter"
+            class="hidden sm:inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold rounded-md px-4 py-2 transition"
+          >
+            <i class="fas fa-bolt"></i>
+            Langganan
+          </a>
           <button
             id="mobileMenuButton"
             class="md:hidden text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition text-2xl focus:outline-none"
@@ -89,62 +118,358 @@
           </button>
         </div>
       </nav>
-      <div
-        id="mobileMenu"
-        class="md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 hidden"
-      >
-        <a class="block px-4 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition" href="#">
-          Home
+      <div id="mobileMenu" class="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 hidden">
+        <a class="block px-4 py-3 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition" href="#beranda">
+          Beranda
         </a>
-        <a class="block px-4 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition" href="#kategori">
+        <a class="block px-4 py-3 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition" href="#kategori">
           Kategori
         </a>
-        <a class="block px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition" href="#tentang">
+        <a class="block px-4 py-3 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition" href="#trending">
+          Trending
+        </a>
+        <a class="block px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition" href="#tentang">
           Tentang
         </a>
+        <button
+          type="button"
+          data-open-command-palette
+          class="w-full flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+        >
+          Pusat kendali
+          <span class="text-xs uppercase tracking-wide text-gray-400">Ctrl/⌘ + K</span>
+        </button>
+      </div>
+      <div class="h-1 bg-gray-200 dark:bg-gray-800">
+        <div id="scrollProgress" class="h-1 w-0 bg-blue-600 dark:bg-blue-400 transition-all duration-200"></div>
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <section aria-label="Pencarian berita" class="mb-8">
-        <form id="searchForm" class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center">
-          <input
-            id="searchInput"
-            name="search"
-            type="text"
-            aria-label="Cari berita"
-            placeholder="Cari berita..."
-            class="flex-grow rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          />
-          <select
-            id="categorySelect"
-            aria-label="Pilih kategori berita"
-            class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          >
-            <option value="">Semua Kategori</option>
-            <option value="business">Bisnis</option>
-            <option value="technology">Teknologi</option>
-            <option value="sports">Olahraga</option>
-            <option value="health">Kesehatan</option>
-          </select>
-          <button
-            type="submit"
-            class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold rounded-md px-5 py-2 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            Cari
-          </button>
-        </form>
+    <main id="beranda" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16">
+      <section
+        aria-label="Sorotan utama NewsApp"
+        class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 text-white shadow-xl"
+      >
+        <div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/dark-dotted.png')]"></div>
+        <div class="relative px-6 sm:px-10 py-12 flex flex-col lg:flex-row lg:items-center gap-12">
+          <div class="lg:w-1/2 space-y-6">
+            <span class="inline-flex items-center gap-2 bg-white/10 text-white px-3 py-1 rounded-full text-sm font-medium">
+              <i class="fas fa-satellite-dish"></i>
+              Update real-time
+            </span>
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
+              Jelajahi berita pilihan, analisis mendalam, dan tren global setiap saat
+            </h1>
+            <p class="text-lg text-blue-100">
+              NewsApp mengkurasi berita dari GNews untuk menghadirkan sorotan utama, filter canggih, serta pengalaman membaca yang ramah perangkat.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <a
+                href="#newsSection"
+                class="inline-flex items-center justify-center gap-2 bg-white text-blue-700 font-semibold px-5 py-3 rounded-lg shadow-md hover:shadow-lg transition"
+              >
+                Lihat berita terbaru
+                <i class="fas fa-arrow-right"></i>
+              </a>
+              <a
+                href="#tentang"
+                class="inline-flex items-center justify-center gap-2 border border-white/70 text-white font-semibold px-5 py-3 rounded-lg hover:bg-white/10 transition"
+              >
+                Pelajari cara kerja
+                <i class="fas fa-book-open"></i>
+              </a>
+            </div>
+          </div>
+          <div class="lg:w-1/2 space-y-6">
+            <div class="glass rounded-2xl p-6 shadow-lg space-y-5">
+              <div class="flex items-center justify-between">
+                <h2 class="text-xl font-semibold">Filter pintar</h2>
+                <span class="text-sm text-blue-100">Cari, sortir, dan pilih rentang waktu</span>
+              </div>
+              <form id="searchForm" class="space-y-4">
+                <div class="flex flex-col gap-3">
+                  <label class="text-sm font-semibold text-blue-100" for="searchInput">Kata kunci</label>
+                  <input
+                    id="searchInput"
+                    name="search"
+                    type="text"
+                    aria-label="Cari berita"
+                    placeholder="Cari berita politik, teknologi, ekonomi..."
+                    class="w-full rounded-lg border border-white/30 bg-white/10 text-white placeholder-blue-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/70 transition"
+                  />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-blue-100" for="categorySelect">Kategori</label>
+                    <select
+                      id="categorySelect"
+                      aria-label="Pilih kategori berita"
+                      class="w-full rounded-lg border border-white/30 bg-white/10 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/70 transition"
+                    >
+                      <option value="">Semua Kategori</option>
+                      <option value="business">Bisnis</option>
+                      <option value="technology">Teknologi</option>
+                      <option value="sports">Olahraga</option>
+                      <option value="health">Kesehatan</option>
+                      <option value="entertainment">Hiburan</option>
+                      <option value="science">Sains</option>
+                    </select>
+                  </div>
+                  <div class="flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-blue-100" for="sortBySelect">Urutkan berdasarkan</label>
+                    <select
+                      id="sortBySelect"
+                      aria-label="Urutkan berita"
+                      class="w-full rounded-lg border border-white/30 bg-white/10 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/70 transition"
+                    >
+                      <option value="publishedAt">Terbaru</option>
+                      <option value="relevance">Relevansi</option>
+                      <option value="popularity">Populer</option>
+                    </select>
+                  </div>
+                  <div class="flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-blue-100" for="timeRangeSelect">Rentang waktu</label>
+                    <select
+                      id="timeRangeSelect"
+                      aria-label="Filter rentang waktu berita"
+                      class="w-full rounded-lg border border-white/30 bg-white/10 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/70 transition"
+                    >
+                      <option value="all">Semua waktu</option>
+                      <option value="24h">24 jam terakhir</option>
+                      <option value="48h">48 jam terakhir</option>
+                      <option value="7d">7 hari terakhir</option>
+                      <option value="30d">30 hari terakhir</option>
+                    </select>
+                  </div>
+                  <div class="flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-blue-100" for="pageSizeSelect">Jumlah per halaman</label>
+                    <select
+                      id="pageSizeSelect"
+                      aria-label="Jumlah artikel per halaman"
+                      class="w-full rounded-lg border border-white/30 bg-white/10 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/70 transition"
+                    >
+                      <option value="9">9 / halaman</option>
+                      <option value="12">12 / halaman</option>
+                      <option value="18">18 / halaman</option>
+                      <option value="24">24 / halaman</option>
+                    </select>
+                  </div>
+                  <div class="flex flex-col gap-2">
+                    <span class="text-sm font-semibold text-blue-100">Topik cepat</span>
+                    <div class="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        class="quick-filter inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/70"
+                        data-query="pemilu"
+                      >
+                        <i class="fas fa-vote-yea"></i>
+                        Pemilu
+                      </button>
+                      <button
+                        type="button"
+                        class="quick-filter inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/70"
+                        data-query="iklim"
+                      >
+                        <i class="fas fa-globe-asia"></i>
+                        Iklim
+                      </button>
+                      <button
+                        type="button"
+                        class="quick-filter inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/70"
+                        data-query="startup"
+                      >
+                        <i class="fas fa-rocket"></i>
+                        Startup
+                      </button>
+                      <button
+                        type="button"
+                        class="quick-filter inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/70"
+                        data-query="ekonomi global"
+                      >
+                        <i class="fas fa-chart-line"></i>
+                        Ekonomi global
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  class="w-full inline-flex items-center justify-center gap-2 bg-white text-blue-700 font-semibold rounded-lg px-6 py-3 transition hover:shadow-lg"
+                >
+                  <i class="fas fa-search"></i>
+                  Temukan berita
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <section id="newsSection" aria-label="Daftar berita terkini" class="min-h-[300px]">
-        <div id="loadingIndicator" class="flex justify-center items-center py-20" hidden aria-live="polite" aria-busy="true">
-          <svg
-            class="animate-spin h-10 w-10 text-blue-600 dark:text-blue-400"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
+      <section aria-label="Filter tersimpan" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/60 p-6 space-y-5 shadow-sm">
+          <div class="flex flex-col gap-1">
+            <h2 class="text-xl font-semibold">Kelola filter favorit</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Simpan kombinasi pencarian khusus untuk akses cepat.</p>
+          </div>
+          <div class="flex flex-col gap-3 sm:flex-row">
+            <label class="sr-only" for="savedFilterName">Nama filter</label>
+            <input
+              id="savedFilterName"
+              type="text"
+              class="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Contoh: Pagi teknologi"
+              autocomplete="off"
+            />
+            <div class="flex flex-wrap gap-3">
+              <button
+                id="saveCurrentFilter"
+                type="button"
+                class="inline-flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 transition"
+              >
+                <i class="fas fa-bookmark"></i>
+                Simpan filter
+              </button>
+              <button
+                id="clearSavedFilters"
+                type="button"
+                class="inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                <i class="fas fa-eraser"></i>
+                Bersihkan
+              </button>
+            </div>
+          </div>
+          <ul id="savedFiltersList" class="space-y-3"></ul>
+        </div>
+        <aside class="rounded-3xl border border-dashed border-blue-200 dark:border-blue-900 bg-blue-50/70 dark:bg-blue-900/20 p-6 space-y-3">
+          <h3 class="text-lg font-semibold text-blue-700 dark:text-blue-300">Tips personalisasi</h3>
+          <ul class="space-y-2 text-sm text-blue-900/80 dark:text-blue-100">
+            <li class="flex gap-2"><i class="fas fa-mouse-pointer mt-1"></i> Terapkan filter kategori atau rentang waktu sebelum menyimpan.</li>
+            <li class="flex gap-2"><i class="fas fa-layer-group mt-1"></i> Gunakan beberapa filter tersimpan untuk switching niche secara instan.</li>
+            <li class="flex gap-2"><i class="fas fa-sync-alt mt-1"></i> Perbarui filter dengan nama yang sama untuk menyimpan ulang preferensi Anda.</li>
+            <li class="flex gap-2"><i class="fas fa-keyboard mt-1"></i> Tekan <span class="font-semibold">Ctrl/⌘ + K</span> untuk membuka pusat kendali.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <section
+        id="statsSection"
+        aria-live="polite"
+        class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-gray-700 dark:text-gray-300"
+      >
+        <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/70 p-6 shadow-sm">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total artikel</p>
+          <p id="totalArticlesStat" class="mt-2 text-2xl font-semibold">-</p>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Hasil berdasarkan filter aktif</p>
+        </div>
+        <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/70 p-6 shadow-sm">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Filter aktif</p>
+          <p id="activeFiltersStat" class="mt-2 text-base font-medium leading-relaxed">
+            -
+          </p>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Gabungan kata kunci, kategori, dan urutan</p>
+        </div>
+        <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/70 p-6 shadow-sm">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Terakhir diperbarui</p>
+          <p id="lastUpdatedStat" class="mt-2 text-lg font-semibold">-</p>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Data ditarik langsung dari API GNews</p>
+        </div>
+      </section>
+
+      <section id="featured" class="space-y-6" aria-label="Artikel unggulan">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-semibold">Sorotan unggulan</h2>
+          <span class="text-sm text-gray-500 dark:text-gray-400">Artikel pertama dari hasil pencarian</span>
+        </div>
+        <article
+          id="featuredArticle"
+          class="hidden overflow-hidden rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 shadow-lg transition"
+        ></article>
+      </section>
+
+      <section id="trending" aria-label="Topik populer" class="space-y-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-semibold">Topik populer hari ini</h2>
+          <button
+            id="refreshTrending"
+            type="button"
+            class="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
           >
+            <i class="fas fa-sync-alt"></i>
+            Segarkan ide
+          </button>
+        </div>
+        <div id="trendingTopics" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"></div>
+      </section>
+
+      <section id="niche" aria-label="Fokus niche" class="space-y-6">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 class="text-2xl font-semibold">Sorotan niche dan industri</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Pantau peluang di sektor khusus sesuai kebutuhan bisnis Anda.</p>
+          </div>
+          <p class="text-xs uppercase tracking-[0.2em] text-blue-500 dark:text-blue-300">Dipilih kurator NewsApp</p>
+        </div>
+        <div id="nicheTopics" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </section>
+
+      <section id="newsSection" aria-label="Daftar berita terkini" class="space-y-6">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div class="space-y-2">
+            <div class="flex flex-wrap items-center gap-3">
+              <h2 class="text-2xl font-semibold">Semua berita</h2>
+              <span
+                id="offlineBadge"
+                class="hidden inline-flex items-center gap-2 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/80 dark:text-amber-100 px-3 py-1 text-xs font-semibold"
+              >
+                <i class="fas fa-wifi"></i>
+                Mode offline: menampilkan cache
+              </span>
+            </div>
+            <p id="resultSummary" class="text-sm text-gray-600 dark:text-gray-400"></p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 justify-start lg:justify-end">
+            <div id="viewToggle" class="inline-flex items-center gap-2 rounded-full bg-gray-100 dark:bg-gray-800 p-1" role="group" aria-label="Pilih tampilan berita">
+              <button
+                type="button"
+                data-view="grid"
+                class="px-4 py-2 rounded-full text-sm font-semibold text-gray-700 dark:text-gray-200 transition"
+              >
+                <i class="fas fa-th-large mr-2"></i>
+                Grid
+              </button>
+              <button
+                type="button"
+                data-view="list"
+                class="px-4 py-2 rounded-full text-sm font-semibold text-gray-500 dark:text-gray-300 transition"
+              >
+                <i class="fas fa-list mr-2"></i>
+                Daftar
+              </button>
+            </div>
+            <button
+              id="densityToggle"
+              type="button"
+              data-density="comfortable"
+              aria-pressed="false"
+              class="inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 transition hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+            >
+              <i class="fas fa-layer-group"></i>
+              <span class="density-label">Ruang lega</span>
+            </button>
+            <button
+              id="refreshArticles"
+              type="button"
+              class="inline-flex items-center gap-2 rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-sm font-semibold px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+              aria-label="Segarkan berita"
+            >
+              <i class="fas fa-sync-alt"></i>
+              <span>Segarkan</span>
+            </button>
+          </div>
+        </div>
+        <div id="loadingIndicator" class="flex justify-center items-center py-16" hidden aria-live="polite" aria-busy="true">
+          <svg class="animate-spin h-10 w-10 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
           </svg>
@@ -154,34 +479,207 @@
         <div id="noResultsMessage" role="alert" class="text-center text-gray-600 dark:text-gray-400 font-semibold py-10 hidden">
           Berita tidak ditemukan.
         </div>
-        <div id="newsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+        <div id="newsGrid" class="grid grid-cols-1 gap-6"></div>
       </section>
 
-      <nav id="pagination" aria-label="Navigasi halaman berita" class="flex justify-center items-center space-x-3 mt-12">
+      <nav id="pagination" aria-label="Navigasi halaman berita" class="flex flex-wrap justify-center items-center gap-4 pt-6">
         <button
           id="prevPage"
-          class="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          class="px-5 py-3 rounded-lg bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
           disabled
           aria-disabled="true"
         >
-          <i class="fas fa-chevron-left mr-1"></i>
+          <i class="fas fa-chevron-left mr-2"></i>
           Sebelumnya
         </button>
         <span id="pageInfo" class="font-semibold text-gray-700 dark:text-gray-300 select-none"></span>
         <button
           id="nextPage"
-          class="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          class="px-5 py-3 rounded-lg bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
           disabled
           aria-disabled="true"
         >
           Berikutnya
-          <i class="fas fa-chevron-right ml-1"></i>
+          <i class="fas fa-chevron-right ml-2"></i>
         </button>
       </nav>
+
+      <section id="kategori" class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+        <div class="space-y-4">
+          <h2 class="text-3xl font-semibold">Kategorikan bacaan Anda</h2>
+          <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
+            Pilih kategori favorit untuk menemukan berita yang paling relevan. Filter yang Anda terapkan akan mengubah daftar artikel secara instan dan disimpan selama sesi berlangsung.
+          </p>
+          <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+            <li><i class="fas fa-check text-green-500 mr-2"></i> Bisnis & ekonomi global</li>
+            <li><i class="fas fa-check text-green-500 mr-2"></i> Teknologi & inovasi</li>
+            <li><i class="fas fa-check text-green-500 mr-2"></i> Olahraga & hiburan</li>
+            <li><i class="fas fa-check text-green-500 mr-2"></i> Kesehatan & sains</li>
+          </ul>
+        </div>
+        <div class="rounded-3xl border border-dashed border-blue-300 dark:border-blue-500/60 p-8">
+          <h3 class="text-xl font-semibold mb-4">Sorotan kategori cepat</h3>
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <button
+              type="button"
+              class="category-pill inline-flex items-center justify-center gap-2 rounded-xl border border-blue-300/70 bg-white/70 px-4 py-3 font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-900/40 dark:text-blue-200"
+              data-category="business"
+            >
+              <i class="fas fa-briefcase"></i>
+              Bisnis
+            </button>
+            <button
+              type="button"
+              class="category-pill inline-flex items-center justify-center gap-2 rounded-xl border border-blue-300/70 bg-white/70 px-4 py-3 font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-900/40 dark:text-blue-200"
+              data-category="technology"
+            >
+              <i class="fas fa-microchip"></i>
+              Teknologi
+            </button>
+            <button
+              type="button"
+              class="category-pill inline-flex items-center justify-center gap-2 rounded-xl border border-blue-300/70 bg-white/70 px-4 py-3 font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-900/40 dark:text-blue-200"
+              data-category="sports"
+            >
+              <i class="fas fa-basketball-ball"></i>
+              Olahraga
+            </button>
+            <button
+              type="button"
+              class="category-pill inline-flex items-center justify-center gap-2 rounded-xl border border-blue-300/70 bg-white/70 px-4 py-3 font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-900/40 dark:text-blue-200"
+              data-category="health"
+            >
+              <i class="fas fa-heartbeat"></i>
+              Kesehatan
+            </button>
+            <button
+              type="button"
+              class="category-pill inline-flex items-center justify-center gap-2 rounded-xl border border-blue-300/70 bg-white/70 px-4 py-3 font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-900/40 dark:text-blue-200"
+              data-category="science"
+            >
+              <i class="fas fa-flask"></i>
+              Sains
+            </button>
+            <button
+              type="button"
+              class="category-pill inline-flex items-center justify-center gap-2 rounded-xl border border-blue-300/70 bg-white/70 px-4 py-3 font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-900/40 dark:text-blue-200"
+              data-category="entertainment"
+            >
+              <i class="fas fa-film"></i>
+              Hiburan
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="newsletter" class="relative overflow-hidden rounded-3xl bg-gray-100 dark:bg-gray-800 p-10">
+        <div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/asfalt-light.png')] dark:opacity-10"></div>
+        <div class="relative flex flex-col lg:flex-row items-center gap-10">
+          <div class="lg:w-1/2 space-y-4">
+            <h2 class="text-3xl font-semibold">Dapatkan sorotan pagi setiap hari</h2>
+            <p class="text-gray-600 dark:text-gray-400">
+              Masukkan alamat email Anda untuk menerima kurasi berita penting langsung ke kotak masuk setiap pagi. Kami tidak akan mengirimkan spam dan Anda dapat berhenti berlangganan kapan pun.
+            </p>
+          </div>
+          <form class="lg:w-1/2 w-full flex flex-col sm:flex-row gap-3">
+            <label class="sr-only" for="newsletterEmail">Email</label>
+            <input
+              id="newsletterEmail"
+              type="email"
+              placeholder="nama@perusahaan.com"
+              class="flex-grow rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="button"
+              class="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold rounded-lg px-6 py-3 transition"
+            >
+              <i class="fas fa-paper-plane"></i>
+              Daftar
+            </button>
+          </form>
+        </div>
+      </section>
     </main>
 
-    <footer id="tentang" class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-center py-6 mt-16 select-none">
-      <p>© 2025 NewsApp. Semua hak cipta dilindungi.</p>
+    <button
+      id="backToTop"
+      type="button"
+      class="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold px-4 py-3 shadow-lg transition opacity-0 pointer-events-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+      aria-label="Kembali ke atas"
+    >
+      <i class="fas fa-arrow-up"></i>
+      <span class="hidden sm:inline text-sm">Ke atas</span>
+    </button>
+
+    <footer id="tentang" class="bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-gray-800 mt-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="space-y-3">
+          <h3 class="text-lg font-semibold">Tentang NewsApp</h3>
+          <p class="text-sm leading-relaxed">
+            NewsApp adalah portal berita adaptif yang memanfaatkan API GNews untuk menghadirkan berita terbaru secara aman melalui server kami. Cache pintar memastikan performa cepat tanpa mengorbankan akurasi.
+          </p>
+        </div>
+        <div class="space-y-3">
+          <h3 class="text-lg font-semibold">Fitur unggulan</h3>
+          <ul class="text-sm space-y-2">
+            <li><i class="fas fa-shield-alt text-blue-500 mr-2"></i> API key tersembunyi di server</li>
+            <li><i class="fas fa-sync text-blue-500 mr-2"></i> Data segar dengan caching pintar</li>
+            <li><i class="fas fa-moon text-blue-500 mr-2"></i> Mode gelap adaptif</li>
+            <li><i class="fas fa-mobile-alt text-blue-500 mr-2"></i> Desain responsif</li>
+          </ul>
+        </div>
+        <div class="space-y-3">
+          <h3 class="text-lg font-semibold">Hubungi kami</h3>
+          <p class="text-sm">Ada masukan atau ide fitur? Kirimkan ke <a class="text-blue-600 dark:text-blue-400 hover:underline" href="mailto:hi@newsapp.dev">hi@newsapp.dev</a></p>
+        </div>
+      </div>
+      <div class="bg-gray-200 dark:bg-gray-950 text-center text-sm py-4 select-none">
+        © 2025 NewsApp. Dibuat dengan ❤ untuk pembaca berita Indonesia.
+      </div>
     </footer>
+
+    <div
+      id="commandPalette"
+      class="hidden fixed inset-0 z-50 bg-transparent"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+    >
+      <div id="commandPaletteOverlay" class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"></div>
+      <div class="relative mx-auto mt-24 max-w-2xl px-4 sm:px-6">
+        <div class="overflow-hidden rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl">
+          <div class="flex items-center gap-3 border-b border-gray-200 dark:border-gray-800 px-4 py-3">
+            <span class="text-gray-400 dark:text-gray-500 text-lg"><i class="fas fa-search"></i></span>
+            <input
+              id="commandPaletteSearch"
+              type="search"
+              class="flex-1 bg-transparent text-sm focus:outline-none placeholder-gray-400 dark:placeholder-gray-500"
+              placeholder="Cari atau jalankan perintah (mis. tema gelap, fokus pencarian)"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <div class="hidden sm:flex items-center gap-1 text-[11px] font-semibold text-gray-400 dark:text-gray-500">
+              <span class="rounded border border-gray-300 px-1.5 py-0.5">esc</span>
+            </div>
+            <button
+              id="commandPaletteClose"
+              type="button"
+              class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition"
+            >
+              <span class="sr-only">Tutup pusat kendali</span>
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <ul id="commandPaletteList" class="max-h-80 overflow-y-auto py-2" role="listbox" aria-label="Daftar perintah"></ul>
+          <div class="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
+            <span>Gunakan ↑ ↓ untuk navigasi, Enter untuk memilih.</span>
+            <span class="hidden sm:inline-flex items-center gap-1">
+              <span class="rounded border border-gray-300 px-1.5 py-0.5">⌘</span>
+              <span class="rounded border border-gray-300 px-1.5 py-0.5">K</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
