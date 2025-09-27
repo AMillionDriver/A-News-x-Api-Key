@@ -407,3 +407,8 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Node build artifacts
+dist/
+.env
+.env.local

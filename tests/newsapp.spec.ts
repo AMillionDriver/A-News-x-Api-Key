@@ -74,7 +74,7 @@ const responseFor = (page: number): GNewsResponse => ({
 });
 
 async function mockNewsApi(page: Page, requestedPages: string[], missingPageParam: { count: number }) {
-  await page.route('**/api/v4/search**', async (route) => {
+  await page.route('**/api/news**', async (route) => {
     const url = new URL(route.request().url());
     const pageParam = url.searchParams.get('page');
     if (!pageParam) {
@@ -118,7 +118,7 @@ test.describe('NewsApp UI', () => {
     await expect(page.locator('#newsGrid article')).toHaveCount(mockArticlesPage1.length);
 
     await Promise.all([
-      page.waitForResponse((response) => response.url().includes('gnews.io/api/v4/search') &&
+      page.waitForResponse((response) => response.url().includes('/api/news') &&
         response.request().method() === 'GET' &&
         new URL(response.url()).searchParams.get('page') === '2'),
       page.click('#nextPage'),
@@ -130,7 +130,7 @@ test.describe('NewsApp UI', () => {
     await expect(page.locator('#prevPage')).toBeEnabled();
 
     await Promise.all([
-      page.waitForResponse((response) => response.url().includes('gnews.io/api/v4/search') &&
+      page.waitForResponse((response) => response.url().includes('/api/news') &&
         response.request().method() === 'GET' &&
         new URL(response.url()).searchParams.get('page') === '1'),
       page.click('#prevPage'),

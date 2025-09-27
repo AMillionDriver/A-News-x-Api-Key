@@ -13,11 +13,12 @@ export default defineConfig({
     viewport: { width: 1280, height: 720 },
   },
   webServer: {
-    command: 'npx http-server . -p 4173 -c-1',
+    command: 'npm run start:test',
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: !process.env.CI,
     stdout: 'pipe',
     stderr: 'pipe',
+    timeout: 120 * 1000,
   },
   projects: [
     {
