@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Berita Terkini - NewsApp</title>
+    <meta
+      name="description"
+      content="NewsApp menyajikan berita terbaru dari berbagai kategori menggunakan API GNews."
+    />
+    <link rel="icon" href="https://storage.googleapis.com/a1aa/image/fce953d0-ad31-4a47-7bcd-7590407c1d24.jpg" />
+    <script src="https://cdn.tailwindcss.com" defer></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+      integrity="sha512-iBBXm8fW90+nuLcSKVBCEK0vY6VZ9lm9Y+2GmZy5uXy5n1V9zzTtmI3n5M5V1p6Vb4bLJ7Dhj4u60bKxO6/3g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      .dark ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      .dark ::-webkit-scrollbar-track {
+        background: #1f2937;
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background-color: #4b5563;
+        border-radius: 10px;
+        border: 2px solid #1f2937;
+      }
+    </style>
+    <script src="/js/main.js" defer></script>
+  </head>
+  <body class="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <header class="sticky top-0 z-50 bg-white dark:bg-gray-800 shadow-md">
+      <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+        <div class="flex items-center space-x-3">
+          <img
+            src="https://storage.googleapis.com/a1aa/image/fce953d0-ad31-4a47-7bcd-7590407c1d24.jpg"
+            alt="Logo NewsApp, huruf N berwarna putih di latar biru"
+            class="w-10 h-10 rounded-md"
+            loading="lazy"
+            width="40"
+            height="40"
+          />
+          <a class="text-xl font-semibold tracking-wide select-none" href="#">NewsApp</a>
+        </div>
+        <div class="hidden md:flex space-x-8 font-medium">
+          <a class="hover:text-blue-600 dark:hover:text-blue-400 transition" href="#">Home</a>
+          <a class="hover:text-blue-600 dark:hover:text-blue-400 transition" href="#kategori">Kategori</a>
+          <a class="hover:text-blue-600 dark:hover:text-blue-400 transition" href="#tentang">Tentang</a>
+        </div>
+        <div class="flex items-center space-x-4">
+          <button
+            id="darkModeToggle"
+            class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition text-lg focus:outline-none"
+            aria-label="Toggle dark mode"
+            title="Toggle dark mode"
+          >
+            <i class="fas fa-moon"></i>
+          </button>
+          <button
+            id="mobileMenuButton"
+            class="md:hidden text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition text-2xl focus:outline-none"
+            aria-label="Toggle menu"
+          >
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+      </nav>
+      <div
+        id="mobileMenu"
+        class="md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 hidden"
+      >
+        <a class="block px-4 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition" href="#">
+          Home
+        </a>
+        <a class="block px-4 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition" href="#kategori">
+          Kategori
+        </a>
+        <a class="block px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition" href="#tentang">
+          Tentang
+        </a>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <section aria-label="Pencarian berita" class="mb-8">
+        <form id="searchForm" class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center">
+          <input
+            id="searchInput"
+            name="search"
+            type="text"
+            aria-label="Cari berita"
+            placeholder="Cari berita..."
+            class="flex-grow rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          />
+          <select
+            id="categorySelect"
+            aria-label="Pilih kategori berita"
+            class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          >
+            <option value="">Semua Kategori</option>
+            <option value="business">Bisnis</option>
+            <option value="technology">Teknologi</option>
+            <option value="sports">Olahraga</option>
+            <option value="health">Kesehatan</option>
+          </select>
+          <button
+            type="submit"
+            class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold rounded-md px-5 py-2 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Cari
+          </button>
+        </form>
+      </section>
+
+      <section id="newsSection" aria-label="Daftar berita terkini" class="min-h-[300px]">
+        <div id="loadingIndicator" class="flex justify-center items-center py-20" hidden aria-live="polite" aria-busy="true">
+          <svg
+            class="animate-spin h-10 w-10 text-blue-600 dark:text-blue-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+          <span class="sr-only">Memuat berita...</span>
+        </div>
+        <div id="errorMessage" role="alert" class="text-center text-red-600 dark:text-red-400 font-semibold py-10 hidden"></div>
+        <div id="noResultsMessage" role="alert" class="text-center text-gray-600 dark:text-gray-400 font-semibold py-10 hidden">
+          Berita tidak ditemukan.
+        </div>
+        <div id="newsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+      </section>
+
+      <nav id="pagination" aria-label="Navigasi halaman berita" class="flex justify-center items-center space-x-3 mt-12">
+        <button
+          id="prevPage"
+          class="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          disabled
+          aria-disabled="true"
+        >
+          <i class="fas fa-chevron-left mr-1"></i>
+          Sebelumnya
+        </button>
+        <span id="pageInfo" class="font-semibold text-gray-700 dark:text-gray-300 select-none"></span>
+        <button
+          id="nextPage"
+          class="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          disabled
+          aria-disabled="true"
+        >
+          Berikutnya
+          <i class="fas fa-chevron-right ml-1"></i>
+        </button>
+      </nav>
+    </main>
+
+    <footer id="tentang" class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-center py-6 mt-16 select-none">
+      <p>© 2025 NewsApp. Semua hak cipta dilindungi.</p>
+    </footer>
+  </body>
+</html>
