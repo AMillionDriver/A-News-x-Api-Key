@@ -3,11 +3,17 @@ import createHttpError from 'http-errors';
 import NodeCache from 'node-cache';
 import { appConfig } from '../config/env';
 
+type SortBy = 'publishedAt' | 'relevance' | 'popularity';
+
+type TimeRange = '24h' | '48h' | '7d' | '30d' | 'all';
+
 type NewsQuery = {
   query: string;
   category?: string;
   page: number;
   pageSize: number;
+  sortBy?: SortBy | string;
+  timeRange?: TimeRange | string;
 };
 
 type GNewsArticle = {
@@ -31,6 +37,8 @@ const topicMap: Record<string, string> = {
   technology: 'technology',
   sports: 'sports',
   health: 'health',
+  entertainment: 'entertainment',
+  science: 'science',
 };
 
 const cache = new NodeCache({
@@ -43,18 +51,43 @@ export type NewsResult = {
   totalArticles: number;
   articles: GNewsArticle[];
   cached: boolean;
+  sortBy: SortBy;
+  timeRange: TimeRange;
 };
 
-const buildCacheKey = ({ query, category, page, pageSize }: NewsQuery): string =>
-  [query || 'default', category || 'all', page, pageSize].join('::');
+const buildCacheKey = ({ query, category, page, pageSize, sortBy, timeRange }: NewsQuery): string =>
+  [query || 'default', category || 'all', page, pageSize, sortBy || 'publishedAt', timeRange || 'all'].join('::');
+
+const sortByValues: SortBy[] = ['publishedAt', 'relevance', 'popularity'];
+const timeRangeMap: Record<Exclude<TimeRange, 'all'>, number> = {
+  '24h': 24,
+  '48h': 48,
+  '7d': 24 * 7,
+  '30d': 24 * 30,
+};
 
 export async function fetchNews(query: NewsQuery): Promise<NewsResult> {
   const sanitizedQuery = query.query.trim() || 'berita';
   const sanitizedCategory = query.category?.trim().toLowerCase();
   const page = Number.isFinite(query.page) && query.page > 0 ? query.page : 1;
   const pageSize = Number.isFinite(query.pageSize) && query.pageSize > 0 ? query.pageSize : appConfig.defaultPageSize;
+  const providedSortBy = (query.sortBy ?? '').toString().toLowerCase();
+  const sanitizedSortBy = sortByValues.includes(providedSortBy as SortBy)
+    ? (providedSortBy as SortBy)
+    : 'publishedAt';
+  const providedTimeRange = (query.timeRange ?? '').toString().toLowerCase();
+  const sanitizedTimeRange = (['24h', '48h', '7d', '30d'].includes(providedTimeRange)
+    ? (providedTimeRange as TimeRange)
+    : 'all') as TimeRange;
 
-  const cacheKey = buildCacheKey({ query: sanitizedQuery, category: sanitizedCategory, page, pageSize });
+  const cacheKey = buildCacheKey({
+    query: sanitizedQuery,
+    category: sanitizedCategory,
+    page,
+    pageSize,
+    sortBy: sanitizedSortBy,
+    timeRange: sanitizedTimeRange,
+  });
   const cached = cache.get<NewsResult>(cacheKey);
   if (cached) {
     return { ...cached, cached: true };
@@ -76,12 +109,28 @@ export async function fetchNews(query: NewsQuery): Promise<NewsResult> {
     params.topic = topicMap[sanitizedCategory];
   }
 
+  if (sanitizedSortBy) {
+    params.sortby = sanitizedSortBy;
+  }
+
+  if (sanitizedTimeRange !== 'all') {
+    const hours = timeRangeMap[sanitizedTimeRange as Exclude<TimeRange, 'all'>];
+    if (hours) {
+      const to = new Date();
+      const from = new Date(to.getTime() - hours * 60 * 60 * 1000);
+      params.from = from.toISOString();
+      params.to = to.toISOString();
+    }
+  }
+
   try {
     const response = await axios.get<GNewsResponse>(`${appConfig.gnews.baseUrl}/search`, { params, timeout: 7000 });
     const payload: NewsResult = {
       totalArticles: response.data.totalArticles ?? response.data.articles.length,
       articles: response.data.articles,
       cached: false,
+      sortBy: sanitizedSortBy,
+      timeRange: sanitizedTimeRange,
     };
     cache.set(cacheKey, payload);
     return payload;
