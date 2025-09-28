@@ -1,5 +1,5 @@
-import { API_BASE_URL, STORAGE_KEYS } from '../constants.js';
-import { readFromStorage, writeToStorage } from '../utils.storage.js';
+import { API_BASE_URL, STORAGE_KEYS } from './constants.js';
+import { readFromStorage, writeToStorage } from './utils.storage.js';
 
 const inMemoryCache = new Map();
 
@@ -23,13 +23,11 @@ export const createNewsClient = () => {
 
   const fetchNews = async (options) => {
     const key = cacheKey(options);
-    if (inMemoryCache.has(key)) {
-      return { ...inMemoryCache.get(key), cached: true };
-    }
-
     const params = buildParams(options);
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
+
+    const cached = inMemoryCache.get(key);
 
     try {
       const response = await fetch(`${API_BASE_URL}?${params.toString()}`, {
@@ -45,6 +43,11 @@ export const createNewsClient = () => {
       inMemoryCache.set(key, payload);
       persist({ options, payload });
       return payload;
+    } catch (error) {
+      if (cached) {
+        return { ...cached, cached: true };
+      }
+      throw error;
     } finally {
       clearTimeout(timeout);
     }
