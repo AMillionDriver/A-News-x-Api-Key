@@ -146,3 +146,7 @@ export async function fetchNews(query: NewsQuery): Promise<NewsResult> {
     throw createHttpError(500, 'Terjadi kesalahan tidak terduga saat mengambil berita.');
   }
 }
+
+export function clearNewsCache(): void {
+  cache.flushAll();
+}
