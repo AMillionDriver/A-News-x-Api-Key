@@ -1,6 +1,6 @@
-import { NICHE_FOCUS_AREAS, TRENDING_IDEAS } from '../constants.js';
-import { animateSwap, createFragmentFromHTML, qsa, sanitizeUrl, setHidden, toggleClass, truncateText } from '../utils.dom.js';
-import { buildMetaText, formatDateTime, pluralize } from '../utils.formatters.js';
+import { NICHE_FOCUS_AREAS, TRENDING_IDEAS } from './constants.js';
+import { animateSwap, createFragmentFromHTML, qsa, sanitizeUrl, setHidden, toggleClass, truncateText } from './utils.dom.js';
+import { buildMetaText, formatDateTime, pluralize } from './utils.formatters.js';
 
 const defaultImage = 'https://placehold.co/800x600/png?text=Gambar+Berita+Tidak+Tersedia';
 

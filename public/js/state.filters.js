@@ -1,5 +1,5 @@
-import { STORAGE_KEYS } from '../constants.js';
-import { readFromStorage, writeToStorage } from '../utils.storage.js';
+import { STORAGE_KEYS } from './constants.js';
+import { readFromStorage, writeToStorage } from './utils.storage.js';
 
 const sanitizeFilter = (filter) => ({
   name: String(filter.name || '').trim(),

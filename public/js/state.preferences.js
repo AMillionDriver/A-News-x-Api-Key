@@ -1,5 +1,5 @@
-import { CATEGORY_OPTIONS, DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS, SORT_OPTIONS, STORAGE_KEYS, TIME_RANGE_OPTIONS } from '../constants.js';
-import { readFromStorage, writeToStorage } from '../utils.storage.js';
+import { CATEGORY_OPTIONS, DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS, SORT_OPTIONS, STORAGE_KEYS, TIME_RANGE_OPTIONS } from './constants.js';
+import { readFromStorage, writeToStorage } from './utils.storage.js';
 
 const defaultPreferences = {
   theme: 'system',
